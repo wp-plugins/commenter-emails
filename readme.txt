@@ -14,6 +14,7 @@ Extract a listing of all commenter emails.
 Extract a listing of all commenter emails.
 
 Via the admin page added by the plugin, `Comments -> Commenter Emails`, the admin is presented with the following information:
+
 * A total count of all unique commenters to the blog
 * A button to download the entire list of unique commenters' email addresses in CSV (comma-separated values) format
 * The entire list of unique commenters' email addresses
