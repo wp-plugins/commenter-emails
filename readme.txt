@@ -1,28 +1,27 @@
 === Commenter Emails ===
 Contributors: coffee2code
-Donate link: http://coffee2code.com/donate
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6ARCFJ9TX3522
 Tags: commenter, commenters, email, address, contact, visitor, comment, coffee2code
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 3.1
-Tested up to: 3.3
-Stable tag: 2.1
-Version: 2.1
+Tested up to: 3.8
+Stable tag: 2.2.1
 
 Extract a listing of all commenter emails.
 
 
 == Description ==
 
-Extract a listing of all commenter emails.
-
 Via the admin page added by the plugin, `Comments -> Commenter Emails`, the admin is presented with the following information:
 
 * A total count of all unique commenters to the blog
-* A button to download the entire list of unique commenters' email addresses in CSV (comma-separated values) format
+* A button to download the entire list of unique commenters' email addresses (and, optionally, their website URL) in CSV (comma-separated values) format
 * The entire list of unique commenters' email addresses and names
 
-The plugin only considers approved comments and does not exclude from its listing any known emails (i.e. admin and post author emails).
+The plugin only considers approved comments and does not exclude from its listing any known email addresses (i.e. admin and post author email addresses).
 
-Links: [Plugin Homepage](http://coffee2code.com/wp-plugins/commenter-emails/) | [Plugin Directory Page](http://wordpress.org/extend/plugins/commenter-emails/) | [Author Homepage](http://coffee2code.com)
+Links: [Plugin Homepage](http://coffee2code.com/wp-plugins/commenter-emails/) | [Plugin Directory Page](http://wordpress.org/plugins/commenter-emails/) | [Author Homepage](http://coffee2code.com)
 
 
 == Installation ==
@@ -39,11 +38,11 @@ Links: [Plugin Homepage](http://coffee2code.com/wp-plugins/commenter-emails/) | 
 
 == Filters ==
 
-The plugin exposes six filters for hooking.  Typically, customizations utilizing these hooks would be put into your active theme's functions.php file, or used by another plugin.
+The plugin exposes six filters for hooking. Typically, customizations utilizing these hooks would be put into your active theme's functions.php file, or used by another plugin.
 
 = c2c_commenter_emails_show_csv_button (filter) =
 
-The 'c2c_commenter_emails_show_csv_button' hook allows you to customize whether the button to download a CSV file of the commenter emails list should be present on the plugin's admin settings page.  By default this is true.
+The 'c2c_commenter_emails_show_csv_button' hook allows you to customize whether the button to download a CSV file of the commenter emails list should be present on the plugin's admin settings page. By default this is true.
 
 Arguments:
 
@@ -58,7 +57,7 @@ add_filter( 'c2c_commenter_emails_show_csv_button', '__return_false' );
 
 = c2c_commenter_emails_show_emails (filter) =
 
-The 'c2c_commenter_emails_show_emails' hook allows you to customize whether the listing of emails should appear on the plugin's admin settings page.  By default this is true.
+The 'c2c_commenter_emails_show_emails' hook allows you to customize whether the listing of emails should appear on the plugin's admin settings page. By default this is true.
 
 Arguments:
 
@@ -73,11 +72,11 @@ add_filter( 'c2c_commenter_emails_show_emails', '__return_false' );
 
 = c2c_commenter_emails_filename (filter) =
 
-The 'c2c_commenter_emails_filename' hook allows you to customize the name used for the .csv file when being downloaded.  By default this is 'commenter-emails.csv'.
+The 'c2c_commenter_emails_filename' hook allows you to customize the name used for the .csv file when being downloaded. By default this is 'commenter-emails.csv'.
 
 Arguments:
 
-* $filename (string): The filename.  By default this is 'commenter-emails.csv'.
+* $filename (string): The filename. By default this is 'commenter-emails.csv'.
 
 Example:
 
@@ -92,11 +91,11 @@ function change_ce_filename( $filename ) {
 
 = manage_commenter_emails_options (filter) =
 
-The 'manage_commenter_emails_options' hook allows you to customize the capability required to access the commenter emails admin page.  You should be certain that you've created the capability and assigned that capability to the desired user(s).  By default this is the 'manage_options' capability.
+The 'manage_commenter_emails_options' hook allows you to customize the capability required to access the commenter emails admin page. You should be certain that you've created the capability and assigned that capability to the desired user(s). By default this is the 'manage_options' capability.
 
 Arguments:
 
-* $options (string): Capability name.  By default this is the 'manage_options' capability.
+* $options (string): Capability name. By default this is the 'manage_options' capability.
 
 Example:
 
@@ -110,7 +109,7 @@ function change_ce_cap( $capability ) {
 
 = c2c_commenter_emails_fields (filter) =
 
-The 'c2c_commenter_emails_fields' hook allows you to customize the user fields included in the download CSV file.  By default the CSV file includes comment_author and comment_author_email.
+The 'c2c_commenter_emails_fields' hook allows you to customize the user fields included in the download CSV file. By default the CSV file includes comment_author and comment_author_email.
 
 Arguments:
 
@@ -119,10 +118,10 @@ Arguments:
 Example:
 
 `
-// Include the commenter's URL address in the download CSV
+// Include the commenter's IP address in the download CSV
 add_filter( 'c2c_commenter_emails_fields', 'change_ce_fields' );
 function change_ce_fields( $fields ) {
-	$fields[] = 'comment_author_url';
+	$fields[] = 'comment_author_IP';
 	return $fields;
 }
 `
@@ -147,6 +146,26 @@ function change_ce_field_separator( $separator ) {
 
 
 == Changelog ==
+
+= 2.2.1 (2013-12-30) =
+* Note compatibility through WP 3.8+
+* Update copyright date (2014)
+* Change donate link
+* Minor readme.txt tweaks (mostly spacing)
+* Add banner
+* Update screenshot
+
+= 2.2 =
+* Show comment author URLs in listing
+* Add checkbox to allow inclusion of comment author URLs in CSV
+* Add check to prevent execution of code if file is directly accessed
+* Re-license as GPLv2 or later (from X11)
+* Add 'License' and 'License URI' header tags to readme.txt and plugin file
+* Remove ending PHP close tag
+* Minor documentation tweaks
+* Note compatibility through WP 3.5+
+* Update copyright date (2013)
+* Move screenshot into repo's assets directory
 
 = 2.1 =
 * Add support for localization
@@ -221,6 +240,12 @@ function change_ce_field_separator( $separator ) {
 
 
 == Upgrade Notice ==
+
+= 2.2.1 =
+Trivial update: noted compatibility with WP 3.8+
+
+= 2.2 =
+Minor feature update: added commenter URLs to listing and optionally to downloaded CSV; noted compatibility through WP 3.5+; explicitly stated license
 
 = 2.1 =
 Recommended update: added support for localization; enqueue CSS; updated screenshot; compatibility is now WP 3.1-3.3+.

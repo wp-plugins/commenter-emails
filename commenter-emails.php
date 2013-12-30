@@ -2,43 +2,50 @@
 /**
  * @package Commenter_Emails
  * @author Scott Reilly
- * @version 2.1
+ * @version 2.2.1
  */
 /*
 Plugin Name: Commenter Emails
-Version: 2.1
+Version: 2.2.1
 Plugin URI: http://coffee2code.com/wp-plugins/commenter-emails/
 Author: Scott Reilly
-Author URI: http://coffee2code.com
+Author URI: http://coffee2code.com/
 Text Domain: commenter-emails
 Domain Path: /lang/
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Description: Extract a listing of all commenter emails.
 
-Compatible with WordPress 3.1+, 3.2+, 3.3+.
+Compatible with WordPress 3.1+ through 3.8+.
 
 =>> Read the accompanying readme.txt file for instructions and documentation.
 =>> Also, visit the plugin's homepage for additional information and updates.
-=>> Or visit: http://wordpress.org/extend/plugins/commenter-emails/
+=>> Or visit: http://wordpress.org/plugins/commenter-emails/
 
 TODO:
 	* Handle large number of commenters (page listing?)
+	* Add unit tests
 */
 
 /*
-Copyright (c) 2007-2012 by Scott Reilly (aka coffee2code)
+	Copyright (c) 2007-2014 by Scott Reilly (aka coffee2code)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
-modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
+	This program is free software; you can redistribute it and/or
+	modify it under the terms of the GNU General Public License
+	as published by the Free Software Foundation; either version 2
+	of the License, or (at your option) any later version.
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+defined( 'ABSPATH' ) or die();
 
 if ( is_admin() && ! class_exists( 'c2c_CommenterEmails' ) ) :
 
@@ -55,7 +62,7 @@ class c2c_CommenterEmails {
 	 * @since 2.1
 	 */
 	public static function version() {
-		return '2.1';
+		return '2.2.1';
 	}
 
 	/**
@@ -64,8 +71,10 @@ class c2c_CommenterEmails {
 	public static function init() {
 		self::$plugin_basename = plugin_basename( __FILE__ );
 
+		// Load textdomain
 		load_plugin_textdomain( 'c2c_ce', false, basename( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'lang' );
 
+		// Register hooks
 		add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
 		add_action( 'admin_menu', array( __CLASS__, 'do_init' ), 11 );
 	}
@@ -97,11 +106,11 @@ class c2c_CommenterEmails {
 	 * the most recent comment will be used to obtain any additional field data
 	 * such as comment_author, etc.
 	 *
-	 * @param array $fields
+	 * @param array $fields  The fields to obtain from each comment
 	 * @param string $output (optional) Any of ARRAY_A | ARRAY_N | OBJECT | OBJECT_K constants. See WP docs for wpdb::get_results() for more info
 	 * @return mixed List of email addresses
 	 */
-	public static function get_emails( $fields = array( 'comment_author_email', 'comment_author' ), $output = ARRAY_N ) {
+	public static function get_emails( $fields = array( 'comment_author_email', 'comment_author', 'comment_author_url' ), $output = ARRAY_N ) {
 		global $wpdb;
 
 		// comment_author_email must be one of the fields
@@ -128,14 +137,18 @@ class c2c_CommenterEmails {
 	 * @return void (Text is streamed to file to user)
 	 */
 	public static function handle_csv_download() {
-		if ( isset( $_GET['download_csv'] ) && $_GET['download_csv'] == '1' ) {
+		if ( isset( $_GET['download_csv'] ) && '1' == $_GET['download_csv'] ) {
 			header( 'Content-type: text/csv' );
 			header( 'Cache-Control: no-store, no-cache' );
 			header( 'Content-Disposition: attachment; filename="' . self::$csv_filename . '"' );
 
 			$outstream = fopen( "php://output", 'w' );
 
-			$fields    = apply_filters( 'c2c_commenter_emails_fields', array( 'comment_author', 'comment_author_email' ) );
+			$default_fields = array( 'comment_author', 'comment_author_email' );
+			if ( isset( $_GET['include_url'] ) && '1' == $_GET['include_url'] )
+				$default_fields[] = 'comment_author_url';
+
+			$fields    = apply_filters( 'c2c_commenter_emails_fields', $default_fields );
 			$field_sep = apply_filters( 'c2c_commenter_emails_field_separator', ',' );
 
 			foreach ( (array) self::get_emails( $fields ) as $item )
@@ -203,9 +216,12 @@ class c2c_CommenterEmails {
 			echo '<p><form action="" method="get">';
 			echo '<label for="submit">';
 			_e( 'Download the email addresses as a CSV file :', 'c2c_ce' );
-			echo '<input type="submit" name="submit" value="' . esc_attr( __( 'Download', 'c2c_ce' ) ) . '" />';
+			echo ' <input type="submit" name="submit" value="' . esc_attr( __( 'Download', 'c2c_ce' ) ) . '" />';
 			echo '</label>';
-			echo '<input type="hidden" name="page" value="' . esc_attr( $_GET['page'] ) . '" />';
+			echo '<label for="include_url">(';
+			echo '<input type="checkbox" name="include_url" value="1" /> ';
+			_e( 'Include commenter website?', 'c2c_ce' );
+			echo ')<input type="hidden" name="page" value="' . esc_attr( $_GET['page'] ) . '" />';
 			echo '<input type="hidden" name="download_csv" value="1" />';
 			echo '</form></p></div>';
 		}
@@ -214,10 +230,13 @@ class c2c_CommenterEmails {
 			echo '<div class="wrap">';
 			echo '<h2>' . __( 'All Commenter Emails', 'c2c_ce' ) . '</h2>';
 			echo '<table>';
-			echo '<tr><th>' . __( 'Email', 'c2c_ce' ) . '</th><th>' . __( 'Name', 'c2c_ce' ) . '</th></tr>';
+			echo '<tr><th>' . __( 'Email', 'c2c_ce' ) . '</th><th>' . __( 'Name', 'c2c_ce' ) . '</th>';
+			echo '<th>' . __( 'URL', 'c2c_ce' ) . '</th></tr>';
 
-			foreach ( $emails as $item )
-				echo '<tr><td>' . esc_html( $item[0] ) . '</td><td>' . esc_html( $item[1] ) . '</td></tr>';
+			foreach ( $emails as $item ) {
+				echo '<tr><td>' . esc_html( $item[0] ) . '</td><td>' . esc_html( $item[1] ) . '</td>';
+				echo '<td>' . make_clickable( esc_html( $item[2] ) ) . '</td></tr>';
+			}
 
 			echo '</table>';
 			echo '<p>' . sprintf( __( '%s commenter emails listed.', 'c2c_ce' ), $emails_count ) . '</p>';
@@ -226,7 +245,7 @@ class c2c_CommenterEmails {
 
 		echo '<div id="c2c-ce" class="wrap"><div>';
 		_e( 'This plugin brought to you by <a href="http://coffee2code.com" title="coffee2code.com">Scott Reilly, aka coffee2code</a>.', 'c2c_ce' );
-		echo '<span><a href="http://coffee2code.com/donate" title="' . esc_attr( __( 'Please consider a donation', 'c2c_ce' ) ) . '">';
+		echo '<span><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6ARCFJ9TX3522" title="' . esc_attr( __( 'Please consider a donation', 'c2c_ce' ) ) . '">';
 		_e( 'Did you find this plugin useful?', 'c2c_ce' );
 		echo '</a></span></div></div>';
 	}
@@ -235,5 +254,3 @@ class c2c_CommenterEmails {
 c2c_CommenterEmails::init();
 
 endif; // end if ! class_exists()
-
-?>
